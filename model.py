@@ -13,7 +13,7 @@ Purpose:
     - Support transfer learning with frozen base layers
     - Provide unified interface for multiple architectures
 
-Author: ImageMetrics Project Team
+Author: Alan Baltazar
 Created: 2026-03-18
 Version: 1.0.0-alpha
 """

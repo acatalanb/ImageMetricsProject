@@ -14,7 +14,7 @@ Purpose:
     - Support multiple architectures and datasets
     - Provide progress callbacks for UI integration
 
-Author: ImageMetrics Project Team
+Author: Alan Baltazar
 Created: 2026-03-18
 Version: 1.0.0-alpha
 """

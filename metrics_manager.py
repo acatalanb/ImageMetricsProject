@@ -21,7 +21,7 @@ Metrics Supported:
     - F1-Score: Harmonic mean of precision and recall
     - Confusion Matrix: True/False Positive/Negative breakdown
 
-Author: ImageMetrics Project Team
+Author: Alan Baltazar
 Created: 2026-03-18
 Version: 1.0.0-alpha
 """

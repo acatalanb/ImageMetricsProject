@@ -24,7 +24,7 @@ Features:
     - Configurable training hyperparameters
     - Visual metrics and evaluation reports
 
-Author: ImageMetrics Project Team
+Author: Alan Baltazar
 Created: 2026-03-18
 Version: 1.0.0-alpha
 """
