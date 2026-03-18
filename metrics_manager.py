@@ -1,3 +1,31 @@
+"""
+metrics_manager.py - Performance Metrics and Evaluation
+
+Description:
+    This module provides comprehensive metrics calculation and visualization for
+    binary classification models. It handles timing, performance metrics computation,
+    confusion matrix generation, and training statistics persistence.
+
+Purpose:
+    - Calculate classification metrics (accuracy, precision, recall, F1-score)
+    - Generate and visualize confusion matrices
+    - Track training and evaluation timing
+    - Save and load training statistics
+    - Provide formatted time display
+    - Generate classification reports
+
+Metrics Supported:
+    - Accuracy: Overall correctness of predictions
+    - Precision: Proportion of positive predictions that are correct
+    - Recall: Proportion of actual positives correctly identified
+    - F1-Score: Harmonic mean of precision and recall
+    - Confusion Matrix: True/False Positive/Negative breakdown
+
+Author: ImageMetrics Project Team
+Created: 2026-03-18
+Version: 1.0.0-alpha
+"""
+
 import time
 import json
 import numpy as np
@@ -42,7 +70,7 @@ class MetricsManager:
             "report": classification_report(y_true, y_pred, output_dict=True, zero_division=0)
         }
 
-    def save_training_stats(self, model_name, duration, val_accuracy, filepath='training_stats.json'):
+    def save_training_stats(self, model_name, duration, val_accuracy, filepath='cache/training_stats.json'):
         stats = {
             "model_name": model_name,
             "training_duration": self.format_time(duration),
@@ -52,7 +80,7 @@ class MetricsManager:
         with open(filepath, 'w') as f:
             json.dump(stats, f, indent=4)
 
-    def load_training_stats(self, filepath='training_stats.json'):
+    def load_training_stats(self, filepath='cache/training_stats.json'):
         try:
             with open(filepath, 'r') as f:
                 return json.load(f)

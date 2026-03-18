@@ -1,3 +1,34 @@
+"""
+app.py - Anomaly Detection Platform UI
+
+Description:
+    This is the main Streamlit application for the Anomaly Detection Platform.
+    It provides a web-based interface for training models, running inference on
+    single images, and evaluating model performance on test datasets. The app
+    supports multiple deep learning architectures and datasets for medical image
+    and facial anomaly detection.
+
+Purpose:
+    - Provide dataset selection and overview interface
+    - Enable interactive model training with progress tracking
+    - Support single image inference with real-time predictions
+    - Perform comprehensive model evaluation with metrics visualization
+    - Display confusion matrices and performance statistics
+    - Manage trained models and GPU resources
+
+Features:
+    - Multi-tab interface for organized workflow
+    - Real-time GPU status monitoring
+    - Model caching for fast inference
+    - Support for multiple architectures (DenseNet121, ResNet50, EfficientNetB0)
+    - Configurable training hyperparameters
+    - Visual metrics and evaluation reports
+
+Author: ImageMetrics Project Team
+Created: 2026-03-18
+Version: 1.0.0-alpha
+"""
+
 import streamlit as st
 import torch
 import torch.nn as nn
@@ -11,12 +42,13 @@ from metrics_manager import MetricsManager
 from train import train_model_pipeline
 
 # --- Config ---
-st.set_page_config(page_title="Medical AI Manager", layout="wide", page_icon="🧬")
+st.set_page_config(page_title="AI Manager", layout="wide", page_icon="🧬")
 
 metrics_mgr = MetricsManager()
 IMG_SIZE = 150
 CACHE_DIR = 'cache'  # <--- NEW CONSTANT
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DATASET_DIR = 'K:\ImageDataset'
 
 # Create cache dir if it doesn't exist (to avoid errors on fresh run)
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -65,7 +97,7 @@ def predict_single(model, image):
 
 def evaluate_test_set(model, test_dir, progress_bar):
     y_true, y_probs = [], []
-    categories = ['NORMAL', 'PNEUMONIA']
+    categories = ['normal', 'anomaly']
     transform = get_transform()
 
     total_files = sum([len(files) for r, d, files in os.walk(test_dir)])
@@ -95,7 +127,7 @@ def evaluate_test_set(model, test_dir, progress_bar):
 
 
 # --- UI Layout ---
-st.title("🧬 Medical Anomaly Detection Platform")
+st.title("Anomaly Detection Platform")
 
 gpu_count = torch.cuda.device_count()
 gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "None"
@@ -104,12 +136,23 @@ st.markdown(f"**System Status:** Detected `{gpu_count}` GPU(s) ({gpu_name})")
 # Look for files in CACHE_DIR
 model_files = [f for f in os.listdir(CACHE_DIR) if f.endswith('.pth')]
 
-# Create 3 Tabs
-tab_train, tab_infer, tab_eval = st.tabs(["🚂 Train Model", "🕵️ Single Scan Analysis", "📊 Full Evaluation"])
+# Initialize session state for dataset choice
+if 'dataset_choice' not in st.session_state:
+    st.session_state.dataset_choice = 'ucirvine_chest_xray'
 
-# === TAB 1: TRAIN NEW MODEL ===
+# Create 4 Tabs
+tab_dataset, tab_train, tab_infer, tab_eval = st.tabs(["📁 Dataset", "🚂 Train Model", "🕵️ Single Scan Analysis", "📊 Full Evaluation"])
+
+# === TAB 1: DATASET ===
+with tab_dataset:
+    st.header("Dataset Overview")
+    st.session_state.dataset_choice = st.selectbox("Select Dataset", ["ucirvine_chest_xray", "yonsei_faces"],
+                                                     index=["ucirvine_chest_xray", "yonsei_faces"].index(st.session_state.dataset_choice))
+    st.write("Dataset information and statistics will be displayed here.")
+
+# === TAB 2: TRAIN NEW MODEL ===
 with tab_train:
-    st.header("Train a New Model")
+    st.header("Train a New Model for the dataset: " + st.session_state.dataset_choice)
     col1, col2 = st.columns(2)
     with col1:
         train_arch = st.selectbox("Select Architecture", ["DenseNet121", "ResNet50", "EfficientNetB0"])
@@ -129,20 +172,20 @@ with tab_train:
             status_text.text("Initializing...")
             # Training now returns path inside 'cache/'
             save_path, acc, duration = train_model_pipeline(
-                train_arch, epochs, batch_size, progress_bar, status_text
+                train_arch, epochs, batch_size, progress_bar, status_text, st.session_state.dataset_choice
             )
 
-            st.success(f"✅ Training Complete!")
+            st.success(f"✅ Training complete for dataset: " + st.session_state.dataset_choice)
             st.write(f"**Saved to:** `{save_path}`")
             st.write(f"**Final Accuracy:** {acc:.2%}")
 
-            time.sleep(2)
+            time.sleep(15)
             st.rerun()
 
         except Exception as e:
             st.error(f"Training failed: {e}")
 
-# === TAB 2: SINGLE PREDICTION ===
+# === TAB 3: SINGLE PREDICTION ===
 with tab_infer:
     if not model_files:
         st.warning(f"No models found in '{CACHE_DIR}'. Please train a model first!")
@@ -165,11 +208,11 @@ with tab_infer:
             prob, lat = predict_single(model, img)
 
             if prob > 0.5:
-                st.error(f"⚠️ **ANOMALY DETECTED** (Pneumonia) - {(prob * 100):.1f}%")
+                st.error(f"⚠️ **ANOMALY DETECTED** - {(prob * 100):.1f}%")
             else:
                 st.success(f"✅ **NORMAL** - {((1 - prob) * 100):.1f}%")
 
-# === TAB 3: EVALUATION ===
+# === TAB 4: EVALUATION ===
 with tab_eval:
     if not model_files:
         st.warning("No models found.")
@@ -183,7 +226,7 @@ with tab_eval:
 
         if st.button("Run Full Evaluation"):
             model_eval = load_pytorch_model(eval_arch, eval_path)
-            test_dir = os.path.join('dataset', 'chest_xray', 'test')
+            test_dir = os.path.join(DATASET_DIR, st.session_state.dataset_choice, 'test')
 
             if os.path.exists(test_dir):
                 prog = st.progress(0)

@@ -1,3 +1,24 @@
+"""
+train.py - Model Training Pipeline
+
+Description:
+    This module handles the complete training pipeline for anomaly detection models.
+    It manages data loading, model training, validation, and model persistence.
+    Supports multi-GPU training, data augmentation, and real-time progress tracking.
+
+Purpose:
+    - Load and preprocess training and validation datasets
+    - Train models with configurable hyperparameters
+    - Track training metrics and validation accuracy
+    - Save best performing models to cache directory
+    - Support multiple architectures and datasets
+    - Provide progress callbacks for UI integration
+
+Author: ImageMetrics Project Team
+Created: 2026-03-18
+Version: 1.0.0-alpha
+"""
+
 import os
 import torch
 import torch.nn as nn
@@ -8,9 +29,9 @@ from model import build_model
 from metrics_manager import MetricsManager
 
 # --- CONFIGURATION ---
-DATA_DIR = os.path.join('dataset', 'chest_xray')
 CACHE_DIR = 'cache'  # <--- NEW FOLDER
 IMG_SIZE = 150
+DATASET_DIR = 'K:\ImageDataset'
 
 # Ensure cache directory exists
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -20,7 +41,7 @@ def get_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def train_model_pipeline(model_name, epochs, batch_size, progress_callback=None, status_text=None):
+def train_model_pipeline(model_name, epochs, batch_size, progress_callback=None, status_text=None, dataset_choice='ucirvine_chest_xray'):
     device = get_device()
     gpu_count = torch.cuda.device_count()
     metrics = MetricsManager()
@@ -50,8 +71,10 @@ def train_model_pipeline(model_name, epochs, batch_size, progress_callback=None,
     ])
 
     # --- Load Data ---
-    train_dataset = datasets.ImageFolder(os.path.join(DATA_DIR, 'train'), transform=train_transform)
-    val_dataset = datasets.ImageFolder(os.path.join(DATA_DIR, 'test'), transform=val_transform)
+    # Use dataset_choice parameter to determine dataset folder
+    data_dir = os.path.join(DATASET_DIR, dataset_choice)
+    train_dataset = datasets.ImageFolder(os.path.join(data_dir, 'train'), transform=train_transform)
+    val_dataset = datasets.ImageFolder(os.path.join(data_dir, 'test'), transform=val_transform)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)

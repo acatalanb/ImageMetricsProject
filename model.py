@@ -1,3 +1,23 @@
+"""
+model.py - Neural Network Model Builder
+
+Description:
+    This module provides functionality to build and configure deep learning models
+    for binary classification tasks (Normal vs Anomaly detection). It supports
+    multiple pre-trained architectures including ResNet50, DenseNet121, and
+    EfficientNetB0, with custom classification heads for binary output.
+
+Purpose:
+    - Load pre-trained models from torchvision
+    - Replace final layers for binary classification
+    - Support transfer learning with frozen base layers
+    - Provide unified interface for multiple architectures
+
+Author: ImageMetrics Project Team
+Created: 2026-03-18
+Version: 1.0.0-alpha
+"""
+
 import torch
 import torch.nn as nn
 from torchvision import models
